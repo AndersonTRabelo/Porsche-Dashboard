@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Porsche Suisse | Sales Intelligence Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons for Premium Look -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter (Swiss Design Aesthetic) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0b0d;
+            /* Premium Dark Porsche GT3 Background with overlay gradient */
+            background-image: 
+                linear-gradient(180deg, rgba(11, 11, 13, 0.92) 0%, rgba(11, 11, 13, 0.96) 100%), 
+                url('https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=1920&q=80');
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+        
+        /* Custom Premium Scrollbar matching Porsche Style */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(11, 11, 13, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #e30613;
+        }
+
+        /* Porsche Accent Colors */
+        .text-porsche-red {
+            color: #e30613;
+        }
+        .bg-porsche-red {
+            background-color: #e30613;
+        }
+        .border-porsche-red {
+            border-color: #e30613;
+        }
+        .bg-porsche-dark {
+            background-color: rgba(18, 18, 21, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        
+        /* Glassmorphism Premium Card Styling */
+        .bg-porsche-card {
+            background-color: rgba(22, 22, 26, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(44, 44, 52, 0.5);
+        }
+
+        /* Custom transition states */
+        .hover-scale {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-scale:hover {
+            transform: translateY(-2px);
+            border-color: #e30613;
+            box-shadow: 0 4px 20px rgba(227, 6, 19, 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <header class="bg-black/80 backdrop-blur-md border-b border-neutral-800/60 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Porsche Logo Aesthetic -->
+                <div class="flex items-center space-x-3">
+                    <div class="flex flex-col">
+                        <span class="text-xl tracking-[0.25em] font-light text-white uppercase font-sans">PORSCHE</span>
+                        <span class="text-[9px] tracking-[0.4em] text-neutral-400 font-semibold uppercase -mt-1">SUISSE INTELLIGENCE</span>
+                    </div>
+                </div>
+                <!-- Status & Time Indicator -->
+                <div class="hidden md:flex items-center space-x-6 text-sm text-neutral-400">
+                    <div class="flex items-center space-x-2">
+                        <span class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Planilha de Vendas Sincronizada</span>
+                    </div>
+                    <div class="border-l border-neutral-800 h-4"></div>
+                    <div>
+                        <span class="text-white font-semibold">100 Transações</span> na Base
+                    </div>
+                    <button onclick="resetAllFilters()" class="text-xs bg-neutral-900/80 border border-neutral-800 text-white px-3 py-1.5 rounded-md hover:bg-porsche-red hover:border-porsche-red transition-all">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> Resetar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        <!-- Welcome & Description -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-light text-white tracking-tight">DATA INTELLIGENCE <strong class="font-bold text-porsche-red">EXECUTIVE VIEW</strong></h1>
+                <p class="text-neutral-400 text-sm mt-1">Análise executiva rigorosa baseada exclusivamente nas colunas consolidadas da planilha oficial da Porsche.</p>
+            </div>
+            <!-- Data Selection Dropdown -->
+            <div class="flex items-center space-x-2">
+                <span class="text-xs uppercase tracking-wider text-neutral-500">Arquivo de Origem:</span>
+                <div class="bg-neutral-950/80 border border-neutral-800 px-3 py-1.5 rounded-lg text-xs font-mono text-white flex items-center space-x-2">
+                    <i class="fa-regular fa-file-excel text-emerald-500"></i>
+                    <span>Planilha base Porsche para dashboard.xlsx</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTER BAR PANEL -->
+        <section class="bg-porsche-card rounded-xl p-6 shadow-xl space-y-6">
+            <div class="flex items-center justify-between border-b border-neutral-800/60 pb-3">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-sliders text-porsche-red"></i>
+                    <h2 class="text-md font-semibold uppercase tracking-wider text-white">Filtros Executivos Dinâmicos</h2>
+                </div>
+                <span class="text-xs text-neutral-500">Os dados e gráficos recalculam instantaneamente</span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Search Filter -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-neutral-400 mb-1.5">Pesquisar Cliente / Vendedor</label>
+                    <div class="relative">
+                        <input id="filterSearch" type="text" oninput="applyFilters()" placeholder="Ex: Sophia ou Peter..." class="w-full bg-neutral-950/80 border border-neutral-850 text-white rounded-lg px-3 py-2 pl-9 text-sm focus:outline-none focus:border-porsche-red transition-all">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-neutral-500 text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- State Filter -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-neutral-400 mb-1.5">Estado (UF)</label>
+                    <select id="filterState" onchange="applyFilters()" class="w-full bg-neutral-950/80 border border-neutral-850 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-porsche-red transition-all">
+                        <option value="ALL">Todos os Estados</option>
+                    </select>
+                </div>
+
+                <!-- Model Family Filter -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-neutral-400 mb-1.5">Modelo Porsche</label>
+                    <select id="filterModel" onchange="applyFilters()" class="w-full bg-neutral-950/80 border border-neutral-850 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-porsche-red transition-all">
+                        <option value="ALL">Todos os Modelos</option>
+                    </select>
+                </div>
+
+                <!-- Payment Method Filter -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-neutral-400 mb-1.5">Forma de Pagamento</label>
+                    <select id="filterPayment" onchange="applyFilters()" class="w-full bg-neutral-950/80 border border-neutral-850 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-porsche-red transition-all">
+                        <option value="ALL">Todos os Meios</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <!-- Model Year Filter -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-neutral-400 mb-1.5">Ano do Modelo</label>
+                    <select id="filterYear" onchange="applyFilters()" class="w-full bg-neutral-950/80 border border-neutral-850 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-porsche-red transition-all">
+                        <option value="ALL">Todos os Anos (2020 - 2026)</option>
+                        <option value="2020">2020</option>
+                        <option value="2021">2021</option>
+                        <option value="2022">2022</option>
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                </div>
+
+                <!-- Delivery Status Filter -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-neutral-400 mb-1.5">Status da Entrega</label>
+                    <select id="filterStatus" onchange="applyFilters()" class="w-full bg-neutral-950/80 border border-neutral-850 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-porsche-red transition-all">
+                        <option value="ALL">Todos os Status</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI METRICS SUMMARY -->
+        <section class="grid grid-cols-2 lg:grid-cols-6 gap-4">
+            <!-- Faturamento Total -->
+            <div class="bg-porsche-card p-4 rounded-xl hover-scale flex flex-col justify-between shadow-lg">
+                <div>
+                    <div class="flex items-center justify-between text-neutral-400 text-xs uppercase tracking-wider">
+                        <span>Faturamento</span>
+                        <i class="fa-solid fa-dollar-sign text-porsche-red"></i>
+                    </div>
+                    <h3 id="kpiRevenue" class="text-xl sm:text-2xl font-bold text-white mt-2">$0.00M</h3>
+                </div>
+                <p class="text-[10px] text-neutral-500 mt-2">Valor Acumulado Bruto</p>
+            </div>
+
+            <!-- Volume de Vendas -->
+            <div class="bg-porsche-card p-4 rounded-xl hover-scale flex flex-col justify-between shadow-lg">
+                <div>
+                    <div class="flex items-center justify-between text-neutral-400 text-xs uppercase tracking-wider">
+                        <span>Volume</span>
+                        <i class="fa-solid fa-car text-neutral-400"></i>
+                    </div>
+                    <h3 id="kpiVolume" class="text-xl sm:text-2xl font-bold text-white mt-2">0</h3>
+                </div>
+                <p class="text-[10px] text-neutral-500 mt-2">Unidades Transacionadas</p>
+            </div>
+
+            <!-- Ticket Médio -->
+            <div class="bg-porsche-card p-4 rounded-xl hover-scale flex flex-col justify-between shadow-lg">
+                <div>
+                    <div class="flex items-center justify-between text-neutral-400 text-xs uppercase tracking-wider">
+                        <span>Ticket Médio</span>
+                        <i class="fa-solid fa-tags text-neutral-400"></i>
+                    </div>
+                    <h3 id="kpiAvgPrice" class="text-xl sm:text-2xl font-bold text-white mt-2">$0K</h3>
+                </div>
+                <p class="text-[10px] text-neutral-500 mt-2">Média por Contrato</p>
+            </div>
+
+            <!-- Entregas Concluídas -->
+            <div class="bg-porsche-card p-4 rounded-xl hover-scale flex flex-col justify-between shadow-lg">
+                <div>
+                    <div class="flex items-center justify-between text-neutral-400 text-xs uppercase tracking-wider">
+                        <span>Concluídos (Delivered)</span>
+                        <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                    </div>
+                    <h3 id="kpiDeliveredRate" class="text-xl sm:text-2xl font-bold text-white mt-2">0%</h3>
+                </div>
+                <p class="text-[10px] text-neutral-500 mt-2">Taxa de Entregas Realizadas</p>
+            </div>
+
+            <!-- Média de KM -->
+            <div class="bg-porsche-card p-4 rounded-xl hover-scale flex flex-col justify-between shadow-lg">
+                <div>
+                    <div class="flex items-center justify-between text-neutral-400 text-xs uppercase tracking-wider">
+                        <span>Km Médio</span>
+                        <i class="fa-solid fa-gauge-high text-neutral-400"></i>
+                    </div>
+                    <h3 id="kpiAvgMileage" class="text-xl sm:text-2xl font-bold text-white mt-2">0K</h3>
+                </div>
+                <p class="text-[10px] text-neutral-500 mt-2">Uso Médio Registrado</p>
+            </div>
+
+            <!-- Cancelados -->
+            <div class="bg-porsche-card p-4 rounded-xl hover-scale flex flex-col justify-between shadow-lg">
+                <div>
+                    <div class="flex items-center justify-between text-neutral-400 text-xs uppercase tracking-wider">
+                        <span>Cancelamento</span>
+                        <i class="fa-solid fa-ban text-rose-500"></i>
+                    </div>
+                    <h3 id="kpiCancelRate" class="text-xl sm:text-2xl font-bold text-white mt-2">0%</h3>
+                </div>
+                <p class="text-[10px] text-neutral-500 mt-2">Taxa de Desistência</p>
+            </div>
+        </section>
+
+        <!-- PORSCHE INTELLIGENCE HUB (DYNAMIC INSIGHTS) -->
+        <section class="bg-porsche-card rounded-xl p-6 shadow-xl border-l-4 border-porsche-red space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-brain text-porsche-red"></i>
+                    <h3 class="text-md font-semibold uppercase tracking-wider text-white">Porsche Intelligence Insights</h3>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs text-neutral-400 bg-neutral-950/85 border border-neutral-800 px-2.5 py-1 rounded hidden sm:inline">Análise com Gemini baseada exclusivamente nos dados reais</span>
+                    <button onclick="generateAiExecutiveReport()" class="bg-porsche-red hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all shadow-md">
+                        <i class="fa-solid fa-sparkles animate-pulse"></i> <span>Relatório IA (Gemini)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI Generated Report Area (Initially Collapsed) -->
+            <div id="aiReportBox" class="hidden p-4 bg-black/90 border border-neutral-800 rounded-xl space-y-3">
+                <div class="flex items-center justify-between border-b border-neutral-900 pb-2">
+                    <span class="text-[10px] uppercase font-bold tracking-wider text-porsche-red flex items-center space-x-1">
+                        <i class="fa-solid fa-microchip"></i> <span>Diretiva Estratégica Executiva (Gemini 3.1)</span>
+                    </span>
+                    <button onclick="toggleAiReport()" class="text-xs text-neutral-500 hover:text-white"><i class="fa-solid fa-times"></i></button>
+                </div>
+                <div id="aiReportContent" class="text-xs text-neutral-300 leading-relaxed whitespace-pre-line space-y-2">
+                    <!-- Loaded dynamically via Gemini API -->
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="insightsContainer">
+                <!-- Dynamic Insights populated by JavaScript based on filters -->
+            </div>
+        </section>
+
+        <!-- CHARTS GRID AREA -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Faturamento por Modelo -->
+            <div class="bg-porsche-card p-6 rounded-xl shadow-lg lg:col-span-2">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold uppercase tracking-wider text-white"><i class="fa-solid fa-chart-bar text-neutral-500 mr-2"></i>Faturamento por Modelo Premium</h3>
+                    <span class="text-xs text-neutral-400">Total em Dólares ($)</span>
+                </div>
+                <div class="h-80 relative">
+                    <canvas id="chartModels"></canvas>
+                </div>
+            </div>
+
+            <!-- Tipo de Motorização Mix -->
+            <div class="bg-porsche-card p-6 rounded-xl shadow-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold uppercase tracking-wider text-white"><i class="fa-solid fa-chart-pie text-neutral-500 mr-2"></i>Mix por Meio de Pagamento</h3>
+                    <span class="text-xs text-neutral-400">Distribuição Volumétrica</span>
+                </div>
+                <div class="h-80 relative flex items-center justify-center">
+                    <canvas id="chartPaymentMix"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Geografia de Vendas -->
+            <div class="bg-porsche-card p-6 rounded-xl shadow-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold uppercase tracking-wider text-white"><i class="fa-solid fa-map-location-dot text-neutral-500 mr-2"></i>Faturamento Líder por Estado</h3>
+                    <span class="text-xs text-neutral-400">Distribuição de Receita</span>
+                </div>
+                <div class="h-80 relative">
+                    <canvas id="chartGeography"></canvas>
+                </div>
+            </div>
+
+            <!-- Ciclo de Vida: Depreciação (Km vs Ano Modelo) -->
+            <div class="bg-porsche-card p-6 rounded-xl shadow-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold uppercase tracking-wider text-white"><i class="fa-solid fa-chart-line text-neutral-500 mr-2"></i>Métricas por Ano de Modelo</h3>
+                    <span class="text-xs text-neutral-400">Preço Médio vs. Km Médio por Ano</span>
+                </div>
+                <div class="h-80 relative">
+                    <canvas id="chartDepreciation"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Leaders and Payment Channel -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Vendedores Lideres -->
+            <div class="bg-porsche-card p-6 rounded-xl shadow-lg lg:col-span-2 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold uppercase tracking-wider text-white"><i class="fa-solid fa-crown text-amber-500 mr-2"></i>Vendedores de Elite</h3>
+                        <span class="text-xs text-neutral-400">Ranking por Receita Comercial</span>
+                    </div>
+                    <div class="overflow-y-auto max-h-[300px] space-y-3 pr-2" id="leaderboardList">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canais de Pagamento -->
+            <div class="bg-porsche-card p-6 rounded-xl shadow-lg flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold uppercase tracking-wider text-white"><i class="fa-solid fa-credit-card text-neutral-500 mr-2"></i>Canais de Faturamento</h3>
+                        <span class="text-xs text-neutral-400">Representação em Dólares</span>
+                    </div>
+                    <div class="space-y-4" id="paymentChannelList">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DETAILED TRANSACTION TABLE -->
+        <section class="bg-porsche-card rounded-xl overflow-hidden shadow-xl border border-neutral-800/60">
+            <div class="p-6 border-b border-neutral-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-list-check text-porsche-red"></i>
+                    <h3 class="text-md font-semibold uppercase tracking-wider text-white">Explorador de Transações</h3>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs text-neutral-400">Exibindo</span>
+                    <select id="pageSize" onchange="changePageSize()" class="bg-neutral-950/80 border border-neutral-800 text-white rounded px-2 py-1 text-xs focus:outline-none">
+                        <option value="10">10 itens</option>
+                        <option value="25">25 itens</option>
+                        <option value="50">50 itens</option>
+                        <option value="100">100 itens</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-neutral-950/90 text-neutral-400 text-[11px] uppercase tracking-wider border-b border-neutral-800/60">
+                            <th class="py-3.5 px-6">ID</th>
+                            <th class="py-3.5 px-6">Cliente</th>
+                            <th class="py-3.5 px-6">Modelo</th>
+                            <th class="py-3.5 px-6">Ano / Km</th>
+                            <th class="py-3.5 px-6">Preço</th>
+                            <th class="py-3.5 px-6">Estado</th>
+                            <th class="py-3.5 px-6">Vendedor</th>
+                            <th class="py-3.5 px-6">Pagamento</th>
+                            <th class="py-3.5 px-6">Status</th>
+                            <th class="py-3.5 px-6 text-right">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="salesTableBody" class="divide-y divide-neutral-900/60 text-sm text-neutral-300">
+                        <!-- Rendered dynamically by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Table Pagination -->
+            <div class="bg-neutral-950/90 px-6 py-4 flex items-center justify-between border-t border-neutral-800/60">
+                <span id="tablePaginationInfo" class="text-xs text-neutral-400">Mostrando 1 a 10 de 100 resultados</span>
+                <div class="flex items-center space-x-2">
+                    <button onclick="prevPage()" class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-xs transition-all"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+                    <span id="currentPageNum" class="text-xs text-white font-semibold">1</span>
+                    <button onclick="nextPage()" class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-xs transition-all">Próximo <i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- DETALHE DA VENDA MODAL -->
+    <div id="saleModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-[#121215]/95 border border-neutral-800 w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl m-4 backdrop-blur-md">
+            <div class="bg-black/90 p-6 border-b border-neutral-800 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-bold tracking-wider text-white">FICHA TÉCNICA DA VENDA</h3>
+                    <p class="text-xs text-neutral-400" id="modalSaleId">ID: #0</p>
+                </div>
+                <button onclick="closeModal()" class="text-neutral-400 hover:text-white transition-colors text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+                <!-- Vehicle Info Box -->
+                <div class="bg-neutral-900/80 p-4 rounded-xl border border-neutral-800 flex items-start space-x-4">
+                    <div class="p-3 bg-neutral-950 text-porsche-red rounded-lg text-lg flex items-center justify-center">
+                        <i class="fa-solid fa-car-side"></i>
+                    </div>
+                    <div>
+                        <h4 id="modalModel" class="text-white font-bold text-md">911 GT3 RS</h4>
+                        <p class="text-xs text-neutral-400" id="modalEngine">Planilha Porsche</p>
+                        <div class="flex items-center space-x-3 mt-1.5 text-xs text-neutral-400">
+                            <span>Ano: <strong class="text-white" id="modalYear">2024</strong></span>
+                            <span>•</span>
+                            <span>Km: <strong class="text-white" id="modalMileage">0</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction Summary Table -->
+                <div class="space-y-3">
+                    <div class="flex justify-between border-b border-neutral-900 pb-2 text-sm">
+                        <span class="text-neutral-400">Cliente</span>
+                        <strong class="text-white" id="modalCustomer">N/A</strong>
+                    </div>
+                    <div class="flex justify-between border-b border-neutral-900 pb-2 text-sm">
+                        <span class="text-neutral-400">Vendedor Responsável</span>
+                        <strong class="text-white" id="modalSalesperson">N/A</strong>
+                    </div>
+                    <div class="flex justify-between border-b border-neutral-900 pb-2 text-sm">
+                        <span class="text-neutral-400">Cidade / Estado</span>
+                        <strong class="text-white" id="modalLocation">N/A</strong>
+                    </div>
+                    <div class="flex justify-between border-b border-neutral-900 pb-2 text-sm">
+                        <span class="text-neutral-400">Método de Pagamento</span>
+                        <strong class="text-white" id="modalPayment">N/A</strong>
+                    </div>
+                    <div class="flex justify-between border-b border-neutral-900 pb-2 text-sm">
+                        <span class="text-neutral-400">Status da Entrega</span>
+                        <span class="px-2 py-0.5 rounded text-xs font-semibold" id="modalStatusBadge">N/A</span>
+                    </div>
+                </div>
+
+                <!-- Total Highlight -->
+                <div class="bg-neutral-950/80 p-4 rounded-xl flex items-center justify-between border-l-4 border-porsche-red">
+                    <div>
+                        <p class="text-xs text-neutral-400 uppercase tracking-wider">Valor do Contrato</p>
+                        <p class="text-[10px] text-neutral-500">Impostos e taxas de entrega inclusos</p>
+                    </div>
+                    <strong class="text-2xl font-bold text-white" id="modalPrice">$0.00</strong>
+                </div>
+
+                <!-- AI Client Pitch Generator Section inside Modal -->
+                <div id="modalAiDraftBox" class="hidden p-4 bg-neutral-950/90 border border-neutral-900 rounded-xl space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] uppercase font-bold tracking-wider text-porsche-red flex items-center space-x-1">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> <span>Abordagem Personalizada (IA Gemini)</span>
+                        </span>
+                        <button onclick="toggleModalAiDraft(false)" class="text-[10px] text-neutral-500 hover:text-white"><i class="fa-solid fa-times"></i></button>
+                    </div>
+                    <div id="modalAiDraftContent" class="text-xs text-neutral-300 leading-relaxed bg-neutral-900/60 p-3 rounded-lg border border-neutral-850 select-all max-h-48 overflow-y-auto whitespace-pre-line">
+                        <!-- Loaded dynamically -->
+                    </div>
+                    <p class="text-[9px] text-neutral-500">Selecione e copie para usar na sua comunicação com o comprador.</p>
+                </div>
+            </div>
+
+            <!-- Footer Action -->
+            <div class="bg-neutral-950/90 p-4 border-t border-neutral-800 flex justify-between items-center flex-wrap gap-2">
+                <button onclick="generateAiProposalForSale()" class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 text-xs rounded-lg hover:border-porsche-red border border-neutral-800 flex items-center space-x-1.5 transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles text-porsche-red animate-pulse"></i> <span>Gerar Pitch IA</span>
+                </button>
+                <div class="flex space-x-2">
+                    <button onclick="closeModal()" class="px-4 py-2 bg-neutral-900 text-neutral-300 text-xs rounded-lg hover:bg-neutral-800 transition-colors">Fechar Detalhes</button>
+                    <button onclick="printInvoice()" class="px-4 py-2 bg-porsche-red text-white text-xs rounded-lg hover:bg-red-700 transition-colors"><i class="fa-solid fa-print mr-1"></i> Imprimir Guia</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI COPILOT FLOATING BUTTON & CHATBOX -->
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <!-- Chatbox Container -->
+        <div id="aiChatbox" class="w-80 md:w-96 h-[500px] bg-porsche-card border border-neutral-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden mb-4 transition-all duration-300 scale-0 origin-bottom-right opacity-0 hidden">
+            <!-- Header -->
+            <div class="bg-black/90 p-4 border-b border-neutral-800 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <div class="h-2.5 w-2.5 rounded-full bg-porsche-red animate-pulse"></div>
+                    <div>
+                        <h4 class="text-xs tracking-wider uppercase text-white font-bold">Porsche AI Copilot</h4>
+                        <p class="text-[9px] text-neutral-400">Consultor Inteligente Suisse</p>
+                    </div>
+                </div>
+                <button onclick="toggleAiChatbox()" class="text-neutral-400 hover:text-white transition-colors text-sm"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <!-- Messages Log -->
+            <div id="aiChatMessages" class="flex-grow p-4 overflow-y-auto space-y-4 text-xs">
+                <div class="bg-neutral-900/80 p-3 rounded-xl border border-neutral-800 text-neutral-300">
+                    <p class="font-bold text-porsche-red text-[10px] uppercase tracking-wider mb-1">Porsche Copilot</p>
+                    Grüezi! Sou o assistente de Inteligência Artificial da Porsche Suisse. Posso ajudar você a analisar a planilha de vendas de forma estatística, recomendar ações executivas e rascunhar estratégias baseadas rigorosamente nas transações oficiais da base de dados. Como posso ajudar?
+                </div>
+            </div>
+            <!-- Suggestion Badges -->
+            <div class="p-2 border-t border-neutral-900 bg-neutral-950/90 flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                <button onclick="sendAiSuggested('Qual é o panorama geral de vendas em TX?')" class="text-[9px] bg-neutral-900 border border-neutral-850 hover:border-porsche-red text-white px-2 py-1 rounded transition-all">Analisar TX</button>
+                <button onclick="sendAiSuggested('Quais anos de modelo apresentam maior km médio na base?')" class="text-[9px] bg-neutral-900 border border-neutral-850 hover:border-porsche-red text-white px-2 py-1 rounded transition-all">Modelos vs Km</button>
+                <button onclick="sendAiSuggested('Qual meio de faturamento gera a maior receita consolidada?')" class="text-[9px] bg-neutral-900 border border-neutral-850 hover:border-porsche-red text-white px-2 py-1 rounded transition-all">Faturamento por Pagamento</button>
+            </div>
+            <!-- Input Bar -->
+            <div class="p-3 border-t border-neutral-800 bg-black/90 flex items-center space-x-2">
+                <input id="aiChatInput" type="text" onkeydown="handleAiChatKey(event)" placeholder="Consulte a inteligência comercial da Porsche..." class="flex-grow bg-neutral-900 border border-neutral-800 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-porsche-red transition-all">
+                <button onclick="sendAiChatMessage()" class="p-2.5 bg-porsche-red hover:bg-red-700 text-white rounded-lg transition-all text-xs flex items-center justify-center">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Toggle Trigger Button -->
+        <button onclick="toggleAiChatbox()" class="h-14 w-14 rounded-full bg-black/85 border border-neutral-800 flex items-center justify-center text-white hover:text-porsche-red hover:border-porsche-red transition-all shadow-xl hover:scale-105 group relative overflow-hidden">
+            <span class="absolute inset-0 bg-gradient-to-tr from-porsche-red/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
+            <i class="fa-solid fa-brain text-lg relative z-10"></i>
+            <span class="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-porsche-red opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-porsche-red"></span>
+            </span>
+        </button>
+    </div>
+
+    <!-- Luxury Footer -->
+    <footer class="bg-black/90 border-t border-neutral-900 mt-12 py-8 text-xs text-neutral-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
+            <p>© 2026 Porsche Suisse SA. Painel corporativo interno confidencial baseado exclusivamente no arquivo "Planilha base Porsche para dashboard.xlsx".</p>
+            <div class="flex justify-center space-x-6">
+                <a href="#" class="hover:text-white">Políticas de Segurança de Dados</a>
+                <span>•</span>
+                <a href="#" class="hover:text-white">Termos de Uso do Dashboard</a>
+                <span>•</span>
+                <a href="#" class="hover:text-white">Auditoria Interna de BI</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Exact 100 rows containing precise mappings of "Planilha base Porsche para dashboard.xlsx"
+        const rawSalesDataset = [
+            { sale_id: 6, date: "INVALID", customer_name: "Michael Adams", model: "718 Cayman", year: 2022, price: 79500.0, mileage: 9800, pay_method: "Credit Card", city: "Boston", state: "MA", salesperson: "Kevin", status: "Delivered" },
+            { sale_id: 7, date: "2024-03-14", customer_name: "Sophia Miller", model: "911 Turbo S", year: 2024, price: 235000.0, mileage: 1200, pay_method: "Wire Transfer", city: "Seattle", state: "WA", salesperson: "Amanda Scott", status: "Delivered" },
+            { sale_id: 8, date: "2023-08-11", customer_name: "William Jones", model: "Taycan 4S", year: 2023, price: 128500.0, mileage: 150, pay_method: "Financing", city: "Houston", state: "TX", salesperson: "Patrick Wood", status: "Delivered" },
+            { sale_id: 9, date: "2024-01-20", customer_name: "Olivia Garcia", model: "911 Dakar", year: 2024, price: 270000.0, mileage: 300, pay_method: "Wire Transfer", city: "Austin", state: "TX", salesperson: "Karen Diaz", status: "Delivered" },
+            { sale_id: 10, date: "2025-11-04", customer_name: "Lucas Martinez", model: "Cayenne Coupe", year: 2025, price: 110000.0, mileage: 1500, pay_method: "Lease", city: "Miami", state: "FL", salesperson: "Steve Ross", status: "In Transit" },
+            { sale_id: 11, date: "2024-05-15", customer_name: "Amélie Dubois", model: "Taycan Turbo S", year: 2024, price: 216000.0, mileage: 0, pay_method: "Crypto Payment", city: "Las Vegas", state: "NV", salesperson: "Diana Long", status: "Delivered" },
+            { sale_id: 12, date: "2026-02-18", customer_name: "Alexander Smith", model: "911 GT3 RS", year: 2026, price: 286500.0, mileage: 700, pay_method: "Wire Transfer", city: "Los Angeles", state: "CA", salesperson: "Peter Lane", status: "Delivered" },
+            { sale_id: 13, date: "2023-09-09", customer_name: "Mateo Silva", model: "718 Cayman GT4 RS", year: 2023, price: 175000.0, mileage: 500, pay_method: "Cash", city: "Phoenix", state: "AZ", salesperson: "Steve Gray", status: "Pending" },
+            { sale_id: 14, date: "2025-04-12", customer_name: "Emma Wilson", model: "Cayenne Turbo GT", year: 2025, price: 197000.0, mileage: 2500, pay_method: "Financing", city: "Dallas", state: "TX", salesperson: "Megan Reed", status: "Delivered" },
+            { sale_id: 15, date: "2021-07-22", customer_name: "Jack Taylor", model: "Macan T", year: 2021, price: 75000.0, mileage: 21000, pay_method: "Bank Transfer", city: "Atlanta", state: "GA", salesperson: "Henry King", status: "Delivered" },
+            { sale_id: 16, date: "2024-10-30", customer_name: "Chloe Evans", model: "Taycan GTS", year: 2024, price: 143000.0, mileage: 5000, pay_method: "Credit Card", city: "Chicago", state: "IL", salesperson: "Samuel Price", status: "Delivered" },
+            { sale_id: 17, date: "2022-12-14", customer_name: "Benjamin Thomas", model: "Cayenne E-Hybrid", year: 2022, price: 93500.0, mileage: 13000, pay_method: "Wire Transfer", city: "San Jose", state: "CA", salesperson: "Linda Cole", status: "Cancelled" },
+            { sale_id: 18, date: "2024-07-02", customer_name: "Aria Harris", model: "911 Targa 4S", year: 2024, price: 157500.0, mileage: 3000, pay_method: "Lease", city: "Columbus", state: "OH", salesperson: "Victor Stone", status: "Pending" },
+            { sale_id: 19, date: "2023-11-23", customer_name: "Daniel White", model: "Panamera", year: 2023, price: 76000.0, mileage: 35000, pay_method: "Financing", city: "Charlotte", state: "NC", salesperson: "Angela Green", status: "Delivered" },
+            { sale_id: 20, date: "2025-06-19", customer_name: "Grace Martin", model: "718 Spyder RS", year: 2025, price: 166500.0, mileage: 800, pay_method: "Cash", city: "Salt Lake City", state: "UT", salesperson: "Betty James", status: "In Transit" },
+            { sale_id: 21, date: "2024-03-08", customer_name: "Logan Thompson", model: "Taycan Turbo", year: 2024, price: 158500.0, mileage: 1100, pay_method: "ACH Payment", city: "Nashville", state: "TN", salesperson: "Laura Hill", status: "Delivered" },
+            { sale_id: 22, date: "2023-01-28", customer_name: "Lily Robinson", model: "Cayenne S", year: 2023, price: 96500.0, mileage: 12000, pay_method: "Debit Card", city: "New Orleans", state: "LA", salesperson: "Amber Clark", status: "Pending" },
+            { sale_id: 23, date: "2025-09-05", customer_name: "Gabriel Clark", model: "Macan Electric", year: 2025, price: 90000.0, mileage: 0, pay_method: "Wire Transfer", city: "Portland", state: "OR", salesperson: "Monica Green", status: "Delivered" },
+            { sale_id: 24, date: "2024-11-17", customer_name: "Zoey Lewis", model: "911 Carrera Cabriolet", year: 2024, price: 129500.0, mileage: 10000, pay_method: "Bank Transfer", city: "Denver", state: "CO", salesperson: "Peter Ford", status: "Delivered" },
+            { sale_id: 25, date: "2023-05-30", customer_name: "Owen Walker", model: "Taycan Cross Turismo", year: 2023, price: 123000.0, mileage: 7500, pay_method: "Lease", city: "Austin", state: "TX", salesperson: "Gregory Adams", status: "Pending Review" },
+            { sale_id: 26, date: "2024-02-14", customer_name: "Penelope Hall", model: "Panamera Turbo", year: 2024, price: 136500.0, mileage: 33000, pay_method: "Financing", city: "Indianapolis", state: "IN", salesperson: "Martin Brooks", status: "Awaiting Delivery" },
+            { sale_id: 27, date: "2023-08-01", customer_name: "Carter Allen", model: "911 Carrera GTS", year: 2023, price: 120500.0, mileage: 9500, pay_method: "Wire Transfer", city: "San Antonio", state: "TX", salesperson: "Diana Cooper", status: "Delivered" },
+            { sale_id: 28, date: "2022-10-10", customer_name: "Aubrey Young", model: "Macan GTS", year: 2022, price: 95000.0, mileage: 3000, pay_method: "Credit Card", city: "San Francisco", state: "CA", salesperson: "Thomas King", status: "In Transit" },
+            { sale_id: 29, date: "2025-01-22", customer_name: "Leo King", model: "911 Dakar", year: 2025, price: 270600.0, mileage: 200, pay_method: "Wire Transfer", city: "Houston", state: "TX", salesperson: "Karen Diaz", status: "Delivered" },
+            { sale_id: 30, date: "2024-06-05", customer_name: "Stella Wright", model: "911 Turbo S", year: 2024, price: 242000.0, mileage: 1000, pay_method: "Crypto Payment", city: "Las Vegas", state: "NV", salesperson: "Rachel Turner", status: "Delivered" },
+            { sale_id: 31, date: "2024-09-12", customer_name: "Nathan Hill", model: "Taycan 4S", year: 2024, price: 128600.0, mileage: 1300, pay_method: "Financing", city: "Dallas", state: "TX", salesperson: "Patrick Wood", status: "Delivered" },
+            { sale_id: 32, date: "2025-03-18", customer_name: "Hazel Scott", model: "Cayenne Coupe", year: 2025, price: 109000.0, mileage: 5000, pay_method: "Lease", city: "San Jose", state: "CA", salesperson: "Steve Ross", status: "In Transit" },
+            { sale_id: 33, date: "2026-01-10", customer_name: "Wyatt Green", model: "Taycan Turbo S", year: 2026, price: 216000.0, mileage: 0, pay_method: "Crypto Payment", city: "Phoenix", state: "AZ", salesperson: "Diana Long", status: "Delivered" },
+            { sale_id: 34, date: "2024-04-22", customer_name: "Nora Adams", model: "718 Cayman GT4 RS", year: 2024, price: 175000.0, mileage: 500, pay_method: "Cash", city: "Tucson", state: "AZ", salesperson: "Steve Gray", status: "Awaiting Delivery" },
+            { sale_id: 35, date: "2025-05-14", customer_name: "Levi Baker", model: "Cayenne Turbo GT", year: 2025, price: 197800.0, mileage: 2400, pay_method: "Financing", city: "Houston", state: "TX", salesperson: "Megan Reed", status: "Delivered" },
+            { sale_id: 36, date: "2021-08-11", customer_name: "Violet Nelson", model: "Macan T", year: 2021, price: 75500.0, mileage: 19500, pay_method: "Bank Transfer", city: "Savannah", state: "GA", salesperson: "Henry King", status: "Delivered" },
+            { sale_id: 37, date: "2024-11-04", customer_name: "Asher Carter", model: "Taycan GTS", year: 2024, price: 143500.0, mileage: 4500, pay_method: "Credit Card", city: "Columbus", state: "OH", salesperson: "Samuel Price", status: "Delivered" },
+            { sale_id: 38, date: "2022-11-15", customer_name: "Aurora Mitchell", model: "Cayenne E-Hybrid", year: 2022, price: 93400.0, mileage: 14000, pay_method: "Wire Transfer", city: "Los Angeles", state: "CA", salesperson: "Linda Cole", status: "Cancelled" },
+            { sale_id: 39, date: "2024-08-02", customer_name: "Oliver Perez", model: "911 Targa 4S", year: 2024, price: 157750.0, mileage: 3700, pay_method: "Lease", city: "Toledo", state: "OH", salesperson: "Victor Stone", status: "Pending" },
+            { sale_id: 40, date: "2023-12-23", customer_name: "Emily Roberts", model: "Panamera", year: 2023, price: 76200.0, mileage: 37000, pay_method: "Financing", city: "Raleigh", state: "NC", salesperson: "Angela Green", status: "Delivered" },
+            { sale_id: 41, date: "2025-07-19", customer_name: "Aiden Turner", model: "718 Spyder RS", year: 2025, price: 166500.0, mileage: 950, pay_method: "Cash", city: "Jacksonville", state: "FL", salesperson: "Lisa Dunn", status: "In Transit" },
+            { sale_id: 42, date: "2024-04-08", customer_name: "Madison Phillips", model: "Taycan Turbo", year: 2024, price: 158600.0, mileage: 1200, pay_method: "ACH Payment", city: "Memphis", state: "TN", salesperson: "Laura Hill", status: "Delivered" },
+            { sale_id: 43, date: "2023-02-28", customer_name: "Elijah Campbell", model: "Cayenne S", year: 2023, price: 96450.0, mileage: 10500, pay_method: "Debit Card", city: "Baton Rouge", state: "LA", salesperson: "Amber Clark", status: "Pending" },
+            { sale_id: 44, date: "2025-10-05", customer_name: "Scarlett Parker", model: "Macan Electric", year: 2025, price: 90050.0, mileage: 0, pay_method: "Wire Transfer", city: "Seattle", state: "WA", salesperson: "Frank Morgan", status: "Delivered" },
+            { sale_id: 45, date: "2024-12-17", customer_name: "Declan Evans", model: "911 Carrera Cabriolet", year: 2024, price: 130300.0, mileage: 10800, pay_method: "Bank Transfer", city: "San Diego", state: "CA", salesperson: "Teresa Ward", status: "Delivered" },
+            { sale_id: 46, date: "2023-06-30", customer_name: "Mila Edwards", model: "Taycan Cross Turismo", year: 2023, price: 123400.0, mileage: 7800, pay_method: "Lease", city: "San Antonio", state: "TX", salesperson: "Gregory Adams", status: "Pending Review" },
+            { sale_id: 47, date: "2024-03-14", customer_name: "Henry Stewart", model: "Panamera Turbo", year: 2024, price: 137000.0, mileage: 33400, pay_method: "Financing", city: "Gary", state: "IN", salesperson: "Martin Brooks", status: "Awaiting Delivery" },
+            { sale_id: 48, date: "2023-09-01", customer_name: "Lucy Flores", model: "911 Carrera GTS", year: 2023, price: 121150.0, mileage: 9972, pay_method: "Wire Transfer", city: "El Paso", state: "TX", salesperson: "Diana Cooper", status: "Delivered" },
+            { sale_id: 49, date: "2022-11-10", customer_name: "Liam Morris", model: "Macan GTS", year: 2022, price: 95200.0, mileage: 3200, pay_method: "Credit Card", city: "Los Angeles", state: "CA", salesperson: "Thomas King", status: "In Transit" },
+            { sale_id: 50, date: "2025-02-22", customer_name: "Stella Bailey", model: "911 Dakar", year: 2025, price: 270000.0, mileage: 1000, pay_method: "Wire Transfer", city: "Los Angeles", state: "CA", salesperson: "Peter Lane", status: "Delivered" },
+            { sale_id: 51, date: "2024-07-05", customer_name: "Isaac Rivera", model: "911 Turbo S", year: 2024, price: 249300.0, mileage: 1000, pay_method: "Wire Transfer", city: "Sacramento", state: "CA", salesperson: "Monica", status: "Delivered" },
+            { sale_id: 52, date: "2024-10-12", customer_name: "Alice Jenkins", model: "Taycan 4S", year: 2024, price: 128600.0, mileage: 1350, pay_method: "Financing", city: "Austin", state: "TX", salesperson: "Patrick Wood", status: "Delivered" },
+            { sale_id: 53, date: "2025-04-18", customer_name: "Lucas Gray", model: "Cayenne Coupe", year: 2025, price: 108250.0, mileage: 9400, pay_method: "Lease", city: "San Francisco", state: "CA", salesperson: "Martin Young", status: "In Transit" },
+            { sale_id: 54, date: "2026-02-10", customer_name: "Elena James", model: "911 GT3", year: 2026, price: 232500.0, mileage: 2500, pay_method: "Wire Transfer", city: "Houston", state: "TX", salesperson: "Martin Young", status: "Delivered" },
+            { sale_id: 55, date: "2024-05-22", customer_name: "Gabriel Ramirez", model: "911 Targa 4", year: 2024, price: 142250.0, mileage: 2400, pay_method: "Cash", city: "Phoenix", state: "AZ", salesperson: "Olivia Ross", status: "Awaiting Delivery" },
+            { sale_id: 56, date: "2025-06-14", customer_name: "Charlotte Scott", model: "Cayenne Turbo GT", year: 2025, price: 198000.0, mileage: 2450, pay_method: "Financing", city: "Dallas", state: "TX", salesperson: "Nancy Reed", status: "Delivered" },
+            { sale_id: 57, date: "2021-09-11", customer_name: "Mason Peterson", model: "Panamera Turbo S", year: 2021, price: 133000.0, mileage: 19850, pay_method: "Bank Transfer", city: "Atlanta", state: "GA", salesperson: "Gary Reed", status: "Delivered" },
+            { sale_id: 58, date: "2024-12-04", customer_name: "Elizabeth Wood", model: "Taycan GTS", year: 2024, price: 143000.0, mileage: 8550, pay_method: "Credit Card", city: "Portland", state: "OR", salesperson: "Justin Fox", status: "Delivered" },
+            { sale_id: 59, date: "2022-12-15", customer_name: "Evelyn Ross", model: "Cayenne E-Hybrid", year: 2022, price: 93350.0, mileage: 13422, pay_method: "Wire Transfer", city: "Austin", state: "TX", salesperson: "Amanda Lee", status: "Cancelled" },
+            { sale_id: 60, date: "2024-09-02", customer_name: "Anthony Bryant", model: "911 GT3", year: 2024, price: 232500.0, mileage: 1450, pay_method: "Lease", city: "Las Vegas", state: "NV", salesperson: "Justin Cox", status: "Pending" },
+            { sale_id: 61, date: "2023-01-23", customer_name: "David Long", model: "Panamera 4 E-Hybrid", year: 2023, price: 108875.0, mileage: 13100, pay_method: "Financing", city: "Asheville", state: "NC", salesperson: "Jessica White", status: "Delivered" },
+            { sale_id: 62, date: "2025-08-19", customer_name: "Harper Peterson", model: "911 Carrera S", year: 2025, price: 100450.0, mileage: 28900, pay_method: "Cash", city: "Orlando", state: "FL", salesperson: "Frank Reed", status: "In Transit" },
+            { sale_id: 63, date: "2024-05-08", customer_name: "Daniel Gray", model: "Taycan Turbo", year: 2024, price: 158600.5, mileage: 911, pay_method: "ACH Payment", city: "Knoxville", state: "TN", salesperson: "Harold Young", status: "Delivered" },
+            { sale_id: 64, date: "2023-03-28", customer_name: "Evelyn Bailey", model: "Panamera 4S", year: 2023, price: 115500.0, mileage: 6510, pay_method: "Debit Card", city: "New Orleans", state: "LA", salesperson: "Rachel Turner", status: "Pending" },
+            { sale_id: 65, date: "2025-11-05", customer_name: "Avery Jenkins", model: "Macan Electric", year: 2025, price: 90050.0, mileage: 0, pay_method: "Wire Transfer", city: "Reno", state: "NV", salesperson: "Kevin Brown", status: "Delivered" },
+            { sale_id: 66, date: "2024-01-17", customer_name: "James Sanders", model: "911 Carrera", year: 2024, price: 125700.0, mileage: 7000, pay_method: "Bank Transfer", city: "Santa Cruz", state: "CA", salesperson: "Natalie", status: "Delivered" },
+            { sale_id: 67, date: "2023-07-30", customer_name: "Ella Rogers", model: "Cayenne", year: 2023, price: 79900.0, mileage: 34000, pay_method: "Lease", city: "Columbus", state: "OH", salesperson: "George Hall", status: "Pending Review" },
+            { sale_id: 68, date: "2024-04-14", customer_name: "Jackson Coleman", model: "Panamera Turbo S", year: 2024, price: 133000.0, mileage: 19500, pay_method: "Financing", city: "Indianapolis", state: "IN", salesperson: "Maria Foster", status: "Awaiting Delivery" },
+            { sale_id: 69, date: "2023-10-01", customer_name: "Grace Ross", model: "911 Carrera GTS", year: 2023, price: 121150.0, mileage: 9500, pay_method: "Wire Transfer", city: "Arlington", state: "TX", salesperson: "Alan Price", status: "Delivered" },
+            { sale_id: 70, date: "2022-12-10", customer_name: "Lucas Rivera", model: "Macan GTS", year: 2022, price: 95200.0, mileage: 3100, pay_method: "Credit Card", city: "Los Angeles", state: "CA", salesperson: "Sandra Hill", status: "In Transit" },
+            { sale_id: 71, date: "2025-03-22", customer_name: "Michael Allen", model: "911 GT3", year: 2025, price: 232500.0, mileage: 1500, pay_method: "Wire Transfer", city: "Los Angeles", state: "CA", salesperson: "Harold Bennett", status: "Delivered" },
+            { sale_id: 72, date: "2024-08-05", customer_name: "Sophia Martinez", model: "911 Turbo", year: 2024, price: 198300.0, mileage: 2400, pay_method: "Wire Transfer", city: "San Francisco", state: "CA", salesperson: "Monica", status: "Delivered" },
+            { sale_id: 73, date: "2024-11-12", customer_name: "William Davis", model: "Taycan 4S", year: 2024, price: 128600.0, mileage: 1100, pay_method: "Financing", city: "Dallas", state: "TX", salesperson: "Rachel West", status: "Delivered" },
+            { sale_id: 74, date: "2025-05-18", customer_name: "Olivia Thompson", model: "Cayenne Coupe", year: 2025, price: 109000.0, mileage: 9503, pay_method: "Lease", city: "San Jose", state: "CA", salesperson: "Olivia Cruz", status: "In Transit" },
+            { sale_id: 75, date: "2026-03-10", customer_name: "Daniel Garcia", model: "Taycan", year: 2026, price: 118400.0, mileage: 500, pay_method: "Wire Transfer", city: "Austin", state: "TX", salesperson: "Lisa Ray", status: "Delivered" },
+            { sale_id: 76, date: "2024-06-22", customer_name: "Emma Wilson", model: "911 Targa 4", year: 2024, price: 142250.0, mileage: 2800, pay_method: "Cash", city: "Phoenix", state: "AZ", salesperson: "Olivia Ross", status: "Awaiting Delivery" },
+            { sale_id: 77, date: "2025-07-14", customer_name: "James Anderson", model: "Cayenne Turbo GT", year: 2025, price: 198000.0, mileage: 2400, pay_method: "Financing", city: "Austin", state: "TX", salesperson: "Gary Price", status: "Delivered" },
+            { sale_id: 78, date: "2021-10-11", customer_name: "Lucas Thomas", model: "Cayenne", year: 2021, price: 79900.0, mileage: 33700, pay_method: "Bank Transfer", city: "Savannah", state: "GA", salesperson: "Brian Allen", status: "Delivered" },
+            { sale_id: 79, date: "2024-12-15", customer_name: "Charlotte Scott", model: "Taycan GTS", year: 2024, price: 143000.0, mileage: 4500, pay_method: "Credit Card", city: "San Antonio", state: "TX", salesperson: "Eric Woods", status: "Delivered" },
+            { sale_id: 80, date: "2022-11-15", customer_name: "Mason Peterson", model: "Cayenne E-Hybrid", year: 2022, price: 93400.0, mileage: 13422, pay_method: "Wire Transfer", city: "San Diego", state: "CA", salesperson: "Peter Ford", status: "Cancelled" },
+            { sale_id: 81, date: "2024-10-02", customer_name: "Avery Jenkins", model: "911 Targa 4S", year: 2024, price: 157750.0, mileage: 3700, pay_method: "Lease", city: "Cleveland", state: "OH", salesperson: "Mark Evans", status: "Pending" },
+            { sale_id: 82, date: "2023-02-23", customer_name: "Grace Ross", model: "Panamera 4 E-Hybrid", year: 2023, price: 108875.0, mileage: 12000, pay_method: "Financing", city: "Asheville", state: "NC", salesperson: "Helen Brooks", status: "Delivered" },
+            { sale_id: 83, date: "2025-09-19", customer_name: "Daniel Gray", model: "718 Boxster GTS", year: 2025, price: 91500.0, mileage: 13300, pay_method: "Cash", city: "Phoenix", state: "AZ", salesperson: "Helen King", status: "In Transit" },
+            { sale_id: 84, date: "2024-06-08", customer_name: "Evelyn Bailey", model: "Taycan Turbo", year: 2024, price: 158600.0, mileage: 900, pay_method: "ACH Payment", city: "Raleigh", state: "NC", salesperson: "Nancy Reed", status: "Delivered" },
+            { sale_id: 85, date: "2023-04-28", customer_name: "Aria Harris", model: "Panamera 4S", year: 2023, price: 115500.0, mileage: 6900, pay_method: "Debit Card", city: "Charlotte", state: "NC", salesperson: "Amanda Lee", status: "Pending" },
+            { sale_id: 86, date: "2025-12-05", customer_name: "Chloe Evans", model: "Macan Electric", year: 2025, price: 90000.0, mileage: 0, pay_method: "Wire Transfer", city: "Seattle", state: "WA", salesperson: "Teresa Cook", status: "Delivered" },
+            { sale_id: 87, date: "2024-02-17", customer_name: "Leo King", model: "911 Carrera S", year: 2024, price: 100450.0, mileage: 28000, pay_method: "Bank Transfer", city: "Seattle", state: "WA", salesperson: "Kevin", status: "Delivered" },
+            { sale_id: 88, date: "2023-08-30", customer_name: "Nora Adams", model: "718 Cayman S", year: 2023, price: 82750.0, mileage: 22500, pay_method: "Lease", city: "San Antonio", state: "TX", salesperson: "Karen Stone", status: "Pending Review" },
+            { sale_id: 89, date: "2024-05-14", customer_name: "Hazel Scott", model: "Panamera 4", year: 2024, price: 102900.0, mileage: 13600, pay_method: "Financing", city: "Dallas", state: "TX", salesperson: "Betty Ward", status: "Awaiting Delivery" },
+            { sale_id: 90, date: "2023-11-01", customer_name: "Alice Jenkins", model: "718 Cayman", year: 2023, price: 76000.0, mileage: 18500, pay_method: "Wire Transfer", city: "Jacksonville", state: "FL", salesperson: "George Bell", status: "Delivered" },
+            { sale_id: 91, date: "2022-01-10", customer_name: "Benjamin Thomas", model: "718 Boxster", year: 2022, price: 73133.3, mileage: 27633, pay_method: "Credit Card", city: "Boston", state: "MA", salesperson: "Jessica", status: "In Transit" },
+            { sale_id: 92, date: "2025-04-22", customer_name: "Emma Wilson", model: "718 Boxster", year: 2025, price: 73133.3, mileage: 27633, pay_method: "Wire Transfer", city: "Columbus", state: "OH", salesperson: "Patricia Fox", status: "Delivered" },
+            { sale_id: 93, date: "2024-11-04", customer_name: "Lucy Flores", model: "718 Boxster", year: 2024, price: 73133.3, mileage: 27633, pay_method: "Financing", city: "San Antonio", state: "TX", salesperson: "Maria Green", status: "Delivered" },
+            { sale_id: 94, date: "2022-12-15", customer_name: "Evelyn Ross", model: "Macan T", year: 2022, price: 75500.0, mileage: 20212, pay_method: "Wire Transfer", city: "Las Vegas", state: "NV", salesperson: "Thomas Fox", status: "Cancelled" },
+            { sale_id: 95, date: "2024-09-02", customer_name: "Anthony Bryant", model: "Macan T", year: 2024, price: 75500.0, mileage: 20212, pay_method: "Lease", city: "Las Vegas", state: "NV", salesperson: "Steve Gray", status: "Pending" },
+            { sale_id: 96, date: "2023-01-23", customer_name: "David Long", model: "Panamera 4", year: 2023, price: 102900.0, mileage: 13600, pay_method: "Financing", city: "Richmond", state: "VA", salesperson: "Diana Long", status: "Delivered" },
+            { sale_id: 97, date: "2025-08-19", customer_name: "Harper Peterson", model: "Macan S", year: 2025, price: 68483.3, mileage: 18709, pay_method: "Cash", city: "Miami", state: "FL", salesperson: "Henry King", status: "In Transit" },
+            { sale_id: 98, date: "2024-05-08", customer_name: "Daniel Gray", model: "Macan S", year: 2024, price: 68483.3, mileage: 18709, pay_method: "ACH Payment", city: "Charlotte", state: "NC", salesperson: "Patrick Wood", status: "Delivered" },
+            { sale_id: 99, date: "2023-03-28", customer_name: "Evelyn Bailey", model: "Macan S", year: 2023, price: 68483.3, mileage: 18709, pay_method: "Debit Card", city: "Austin", state: "TX", salesperson: "Kyle Perry", status: "Pending" },
+            { sale_id: 100, date: "2025-11-05", customer_name: "Avery Jenkins", model: "Macan", year: 2025, price: 61800.0, mileage: 31266, pay_method: "Wire Transfer", city: "Phoenix", state: "AZ", salesperson: "Kyle Perry", status: "Delivered" },
+            { sale_id: 101, date: "2024-01-17", customer_name: "James Sanders", model: "Macan", year: 2024, price: 61800.0, mileage: 31266, pay_method: "Bank Transfer", city: "Richmond", state: "VA", salesperson: "Carl Simmons", status: "Delivered" },
+            { sale_id: 102, date: "2023-07-30", customer_name: "Ella Rogers", model: "Macan", year: 2023, price: 61800.0, mileage: 31266, pay_method: "Lease", city: "Columbus", state: "OH", salesperson: "Carl Simmons", status: "Pending Review" },
+            { sale_id: 103, date: "2024-04-14", customer_name: "Jackson Coleman", model: "Cayenne S", year: 2024, price: 96500.0, mileage: 11000, pay_method: "Financing", city: "Richmond", state: "VA", salesperson: "Chris Moore", status: "Awaiting Delivery" },
+            { sale_id: 104, date: "2023-10-01", customer_name: "Grace Ross", model: "Cayenne", year: 2023, price: 79900.0, mileage: 32000, pay_method: "Wire Transfer", city: "Baton Rouge", state: "LA", salesperson: "Chris Moore", status: "Delivered" },
+            { sale_id: 105, date: "2022-12-10", customer_name: "Lucas Rivera", model: "Cayenne Turbo", year: 2022, price: 146800.0, mileage: 11300, pay_method: "Credit Card", city: "Orlando", state: "FL", salesperson: "Brian Hall", status: "In Transit" }
+        ];
+
+        const salesData = [...rawSalesDataset];
+        let filteredData = [...salesData];
+        let currentPage = 1;
+        let pageSize = 10;
+        
+        // Chart Instances (Global to allow updating)
+        let chartModelsInstance = null;
+        let chartPaymentMixInstance = null;
+        let chartGeographyInstance = null;
+        let chartDepreciationInstance = null;
+
+        window.onload = function() {
+            populateFilterOptions();
+            applyFilters();
+        };
+
+        // Populate Filter dropdown lists uniquely from dataset
+        function populateFilterOptions() {
+            const states = [...new Set(salesData.map(d => d.state))].sort();
+            const models = [...new Set(salesData.map(d => d.model))].sort();
+            const payMethods = [...new Set(salesData.map(d => d.pay_method))].sort();
+            const statuses = [...new Set(salesData.map(d => d.status))].sort();
+
+            const stateSelect = document.getElementById('filterState');
+            states.forEach(st => {
+                const opt = document.createElement('option');
+                opt.value = st;
+                opt.textContent = st;
+                stateSelect.appendChild(opt);
+            });
+
+            const modelSelect = document.getElementById('filterModel');
+            models.forEach(mod => {
+                const opt = document.createElement('option');
+                opt.value = mod;
+                opt.textContent = mod;
+                modelSelect.appendChild(opt);
+            });
+
+            const paySelect = document.getElementById('filterPayment');
+            payMethods.forEach(pay => {
+                const opt = document.createElement('option');
+                opt.value = pay;
+                opt.textContent = pay;
+                paySelect.appendChild(opt);
+            });
+
+            const statusSelect = document.getElementById('filterStatus');
+            statuses.forEach(stat => {
+                const opt = document.createElement('option');
+                opt.value = stat;
+                opt.textContent = stat;
+                statusSelect.appendChild(opt);
+            });
+        }
+
+        function applyFilters() {
+            const searchVal = document.getElementById('filterSearch').value.toLowerCase().trim();
+            const stateVal = document.getElementById('filterState').value;
+            const modelVal = document.getElementById('filterModel').value;
+            const payVal = document.getElementById('filterPayment').value;
+            const yearVal = document.getElementById('filterYear').value;
+            const statusVal = document.getElementById('filterStatus').value;
+
+            // Perform filtering logic based strictly on spreadsheet values
+            filteredData = salesData.filter(d => {
+                const matchSearch = !searchVal || 
+                                    d.customer_name.toLowerCase().includes(searchVal) || 
+                                    d.salesperson.toLowerCase().includes(searchVal);
+                const matchState = stateVal === 'ALL' || d.state === stateVal;
+                const matchModel = modelVal === 'ALL' || d.model === modelVal;
+                const matchPay = payVal === 'ALL' || d.pay_method === payVal;
+                const matchYear = yearVal === 'ALL' || d.year.toString() === yearVal;
+                const matchStatus = statusVal === 'ALL' || d.status === statusVal;
+
+                return matchSearch && matchState && matchModel && matchPay && matchYear && matchStatus;
+            });
+
+            currentPage = 1; // Reset to page 1
+            updateDashboard();
+        }
+
+        // Reset all filters to default
+        function resetAllFilters() {
+            document.getElementById('filterSearch').value = '';
+            document.getElementById('filterState').value = 'ALL';
+            document.getElementById('filterModel').value = 'ALL';
+            document.getElementById('filterPayment').value = 'ALL';
+            document.getElementById('filterYear').value = 'ALL';
+            document.getElementById('filterStatus').value = 'ALL';
+            applyFilters();
+        }
+
+        // Core UI Update Router
+        function updateDashboard() {
+            calculateKPIs();
+            renderCharts();
+            renderTable();
+            renderLeaderboard();
+            renderPaymentChannels();
+            generateDynamicInsights();
+        }
+
+        // Formatter Helper
+        function formatUSD(num) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(num);
+        }
+
+        function calculateKPIs() {
+            const totalRevenue = filteredData.reduce((acc, curr) => acc + curr.price, 0);
+            const totalVolume = filteredData.length;
+            const avgPrice = totalVolume > 0 ? (totalRevenue / totalVolume) : 0;
+            
+            // Deliveries Share calculation (Direct status from sheet)
+            const deliveredVolume = filteredData.filter(d => d.status.toLowerCase() === 'delivered').length;
+            const deliveredRate = totalVolume > 0 ? ((deliveredVolume / totalVolume) * 100) : 0;
+
+            // Avg mileage
+            const totalMileage = filteredData.reduce((acc, curr) => acc + curr.mileage, 0);
+            const avgMileage = totalVolume > 0 ? (totalMileage / totalVolume) : 0;
+
+            // Cancel Rate
+            const cancelledCount = filteredData.filter(d => d.status.toLowerCase() === 'cancelled').length;
+            const cancelRate = totalVolume > 0 ? ((cancelledCount / totalVolume) * 100) : 0;
+
+            // Inject into DOM
+            document.getElementById('kpiRevenue').textContent = totalRevenue >= 1000000 
+                ? `$${(totalRevenue / 1000000).toFixed(2)}M` 
+                : formatUSD(totalRevenue);
+            document.getElementById('kpiVolume').textContent = totalVolume;
+            document.getElementById('kpiAvgPrice').textContent = formatUSD(avgPrice);
+            document.getElementById('kpiDeliveredRate').textContent = `${deliveredRate.toFixed(1)}%`;
+            document.getElementById('kpiAvgMileage').textContent = totalVolume > 0 ? `${(avgMileage / 1000).toFixed(1)}K mi` : '0';
+            document.getElementById('kpiCancelRate').textContent = `${cancelRate.toFixed(1)}%`;
+        }
+
+        function renderCharts() {
+            // Theme colors matching Porsche style
+            const colors = {
+                red: '#e30613',
+                charcoal: '#1a1a20',
+                slate: '#8a8a93',
+                grid: '#242429',
+                gold: '#c5a059',
+                blue: '#005b82',
+                white: '#ffffff'
+            };
+
+            // ---- CHART 1: Model performance ----
+            const modelSummary = {};
+            filteredData.forEach(d => {
+                if (!modelSummary[d.model]) {
+                    modelSummary[d.model] = 0;
+                }
+                modelSummary[d.model] += d.price;
+            });
+            const sortedModels = Object.entries(modelSummary)
+                .sort((a,b) => b[1] - a[1])
+                .slice(0, 8); // Top 8 for visual neatness
+
+            const modelLabels = sortedModels.map(m => m[0]);
+            const modelValues = sortedModels.map(m => m[1]);
+
+            if (chartModelsInstance) chartModelsInstance.destroy();
+            const ctx1 = document.getElementById('chartModels').getContext('2d');
+            chartModelsInstance = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: modelLabels,
+                    datasets: [{
+                        label: 'Faturamento Bruto ($)',
+                        data: modelValues,
+                        backgroundColor: colors.red,
+                        borderColor: '#ffffff',
+                        borderWidth: 0,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + formatUSD(context.parsed.x);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: colors.grid },
+                            ticks: { color: '#8a8a93', font: { family: 'Inter', size: 10 } }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: '#ffffff', font: { family: 'Inter', size: 11, weight: '500' } }
+                        }
+                    }
+                }
+            });
+
+            // ---- CHART 2: Payment Method Mix (Rosca/Donut) ----
+            const paymentSummary = {};
+            filteredData.forEach(d => {
+                paymentSummary[d.pay_method] = (paymentSummary[d.pay_method] || 0) + 1;
+            });
+
+            if (chartPaymentMixInstance) chartPaymentMixInstance.destroy();
+            const ctx2 = document.getElementById('chartPaymentMix').getContext('2d');
+            chartPaymentMixInstance = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(paymentSummary),
+                    datasets: [{
+                        data: Object.values(paymentSummary),
+                        backgroundColor: [colors.white, colors.red, colors.gold, colors.blue, '#4ade80', '#fb923c', '#a78bfa', '#22d3ee', '#f472b6'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#ffffff',
+                                font: { family: 'Inter', size: 10 }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+
+            // ---- CHART 3: Sales Geography ----
+            const stateSummary = {};
+            filteredData.forEach(d => {
+                if (!stateSummary[d.state]) stateSummary[d.state] = 0;
+                stateSummary[d.state] += d.price;
+            });
+            const sortedStates = Object.entries(stateSummary).sort((a,b) => b[1] - a[1]).slice(0, 6);
+
+            if (chartGeographyInstance) chartGeographyInstance.destroy();
+            const ctx3 = document.getElementById('chartGeography').getContext('2d');
+            chartGeographyInstance = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: sortedStates.map(s => s[0]),
+                    datasets: [{
+                        label: 'Volume Geográfico ($)',
+                        data: sortedStates.map(s => s[1]),
+                        backgroundColor: '#ffffff',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) { return ' ' + formatUSD(context.parsed.y); }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#ffffff' } },
+                        y: { grid: { color: colors.grid }, ticks: { color: '#8a8a93' } }
+                    }
+                }
+            });
+
+            // ---- CHART 4: Average Price and Mileage by Model Year ----
+            const yearSummary = {};
+            filteredData.forEach(d => {
+                if (!yearSummary[d.year]) {
+                    yearSummary[d.year] = { total_price: 0, total_mileage: 0, count: 0 };
+                }
+                yearSummary[d.year].total_price += d.price;
+                yearSummary[d.year].total_mileage += d.mileage;
+                yearSummary[d.year].count++;
+            });
+
+            const sortedYears = Object.keys(yearSummary).sort();
+            const avgPricesByYear = sortedYears.map(y => yearSummary[y].total_price / yearSummary[y].count);
+            const avgMileageByYear = sortedYears.map(y => yearSummary[y].total_mileage / yearSummary[y].count);
+
+            if (chartDepreciationInstance) chartDepreciationInstance.destroy();
+            const ctx4 = document.getElementById('chartDepreciation').getContext('2d');
+            chartDepreciationInstance = new Chart(ctx4, {
+                type: 'line',
+                data: {
+                    labels: sortedYears,
+                    datasets: [
+                        {
+                            label: 'Preço Médio ($)',
+                            data: avgPricesByYear,
+                            borderColor: colors.red,
+                            backgroundColor: 'rgba(227, 6, 19, 0.1)',
+                            yAxisID: 'y_price',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Km Médio',
+                            data: avgMileageByYear,
+                            borderColor: '#ffffff',
+                            borderDash: [5, 5],
+                            yAxisID: 'y_mileage',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#ffffff' } }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#8a8a93' } },
+                        y_price: {
+                            type: 'linear',
+                            position: 'left',
+                            grid: { color: colors.grid },
+                            ticks: { color: colors.red }
+                        },
+                        y_mileage: {
+                            type: 'linear',
+                            position: 'right',
+                            grid: { display: false },
+                            ticks: { color: '#ffffff' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderLeaderboard() {
+            const sellers = {};
+            filteredData.forEach(d => {
+                const cleanName = d.salesperson.trim().replace(/\s+/g, ' ').toUpperCase();
+                if (!sellers[cleanName]) {
+                    sellers[cleanName] = { name: d.salesperson, volume: 0, revenue: 0 };
+                }
+                sellers[cleanName].volume++;
+                sellers[cleanName].revenue += d.price;
+            });
+
+            const sortedSellers = Object.values(sellers).sort((a,b) => b.revenue - a.revenue);
+            const container = document.getElementById('leaderboardList');
+            container.innerHTML = '';
+
+            if (sortedSellers.length === 0) {
+                container.innerHTML = `<div class="text-center text-neutral-500 py-6 text-sm">Nenhum vendedor corresponde aos filtros.</div>`;
+                return;
+            }
+
+            sortedSellers.forEach((seller, idx) => {
+                const rankBadge = idx === 0 
+                    ? '<i class="fa-solid fa-trophy text-amber-500 text-sm"></i>' 
+                    : idx === 1 
+                        ? '<i class="fa-solid fa-medal text-slate-300 text-sm"></i>' 
+                        : idx === 2 
+                            ? '<i class="fa-solid fa-medal text-amber-700 text-sm"></i>' 
+                            : `<span class="text-neutral-500 font-bold text-xs">${idx + 1}</span>`;
+
+                const row = document.createElement('div');
+                row.className = "flex items-center justify-between p-3 bg-neutral-900/70 border border-neutral-800/80 rounded-lg hover:border-neutral-700 transition-colors";
+                row.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="h-6 w-6 flex items-center justify-center bg-black rounded border border-neutral-850">
+                            ${rankBadge}
+                        </div>
+                        <div>
+                            <p class="text-white text-xs font-semibold capitalize">${seller.name.toLowerCase()}</p>
+                            <p class="text-[10px] text-neutral-500">${seller.volume} ${seller.volume === 1 ? 'veículo' : 'veículos'} vendido(s)</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-white text-xs font-bold">${formatUSD(seller.revenue)}</p>
+                        <p class="text-[9px] text-porsche-red uppercase font-semibold">Premium Seller</p>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // Render payment channel stats dynamically
+        function renderPaymentChannels() {
+            const payments = {};
+            filteredData.forEach(d => {
+                if (!payments[d.pay_method]) {
+                    payments[d.pay_method] = { count: 0, total: 0 };
+                }
+                payments[d.pay_method].count++;
+                payments[d.pay_method].total += d.price;
+            });
+
+            const sortedPayments = Object.entries(payments).sort((a,b) => b[1].total - a[1].total);
+            const container = document.getElementById('paymentChannelList');
+            container.innerHTML = '';
+
+            if (sortedPayments.length === 0) {
+                container.innerHTML = `<div class="text-center text-neutral-500 py-6 text-sm">Sem canais para listar.</div>`;
+                return;
+            }
+
+            const highestTotal = sortedPayments[0][1].total;
+
+            sortedPayments.forEach(([method, data]) => {
+                const percent = highestTotal > 0 ? (data.total / highestTotal) * 100 : 0;
+                const block = document.createElement('div');
+                block.className = "space-y-1.5";
+                block.innerHTML = `
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-white font-medium">${method}</span>
+                        <span class="text-neutral-400">${formatUSD(data.total)} <span class="text-[10px] text-neutral-500">(${data.count})</span></span>
+                    </div>
+                    <div class="w-full bg-neutral-900/60 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-porsche-red h-full rounded-full" style="width: ${percent}%"></div>
+                    </div>
+                `;
+                container.appendChild(block);
+            });
+        }
+
+        // Intelligence Hub - Dynamic analytics generator based on current user filter
+        function generateDynamicInsights() {
+            const container = document.getElementById('insightsContainer');
+            container.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center text-neutral-500 text-sm">Sem dados suficientes para processar insights. Ajuste seus filtros.</div>`;
+                return;
+            }
+
+            const totalRev = filteredData.reduce((acc, curr) => acc + curr.price, 0);
+            const totalVol = filteredData.length;
+
+            // Highlight 1: Top performing state of selected filters
+            const states = {};
+            filteredData.forEach(d => states[d.state] = (states[d.state] || 0) + d.price);
+            const topState = Object.entries(states).sort((a,b) => b[1] - a[1])[0] || ["N/A", 0];
+            const statePct = totalRev > 0 ? ((topState[1] / totalRev) * 100).toFixed(1) : 0;
+
+            const insight1 = document.createElement('div');
+            insight1.className = "space-y-2 p-3 bg-neutral-950/80 rounded-lg border border-neutral-900/80";
+            insight1.innerHTML = `
+                <div class="flex items-center space-x-2 text-white">
+                    <i class="fa-solid fa-location-crosshairs text-porsche-red"></i>
+                    <h4 class="text-xs font-bold uppercase tracking-wider">Liderança Geográfica</h4>
+                </div>
+                <p class="text-xs text-neutral-400">O estado de <strong class="text-white">${topState[0]}</strong> representa <strong class="text-emerald-400">${statePct}%</strong> do faturamento atual filtrado, consolidando-se como seu pólo de maior conversão comercial.</p>
+            `;
+            container.appendChild(insight1);
+
+            // Highlight 2: Payment Method Domination (Derived from PayMethodSanitized)
+            const payments = {};
+            filteredData.forEach(d => payments[d.pay_method] = (payments[d.pay_method] || 0) + d.price);
+            const topPayment = Object.entries(payments).sort((a,b) => b[1] - a[1])[0] || ["N/A", 0];
+            const payPct = totalRev > 0 ? ((topPayment[1] / totalRev) * 100).toFixed(1) : 0;
+
+            const insight2 = document.createElement('div');
+            insight2.className = "space-y-2 p-3 bg-neutral-950/80 rounded-lg border border-neutral-900/80";
+            insight2.innerHTML = `
+                <div class="flex items-center space-x-2 text-white">
+                    <i class="fa-solid fa-credit-card text-amber-400"></i>
+                    <h4 class="text-xs font-bold uppercase tracking-wider">Canal Financeiro Líder</h4>
+                </div>
+                <p class="text-xs text-neutral-400">A modalidade <strong class="text-white">${topPayment[0]}</strong> concentra <strong class="text-emerald-400">${payPct}%</strong> da liquidez financeira neste escopo, exigindo atenção logística dedicada para liberação do caixa.</p>
+            `;
+            container.appendChild(insight2);
+
+            // Highlight 3: Operational Risks (Cancelled orders and logistics)
+            const cancelled = filteredData.filter(d => d.status.toLowerCase() === 'cancelled');
+            const totalLoss = cancelled.reduce((acc,c) => acc + c.price, 0);
+
+            const insight3 = document.createElement('div');
+            insight3.className = "space-y-2 p-3 bg-neutral-950/80 rounded-lg border border-neutral-900/80";
+            
+            if (cancelled.length > 0) {
+                insight3.innerHTML = `
+                    <div class="flex items-center space-x-2 text-white">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-500"></i>
+                        <h4 class="text-xs font-bold uppercase tracking-wider">Retenção de Faturamento</h4>
+                    </div>
+                    <p class="text-xs text-neutral-400">Existem <strong class="text-rose-500">${cancelled.length} cancelamentos</strong> no escopo ativo, drenando <strong class="text-rose-500">${formatUSD(totalLoss)}</strong> da receita. Recomenda-se auditoria interna no pós-venda.</p>
+                `;
+            } else {
+                insight3.innerHTML = `
+                    <div class="flex items-center space-x-2 text-white">
+                        <i class="fa-solid fa-shield-halved text-emerald-500"></i>
+                        <h4 class="text-xs font-bold uppercase tracking-wider">Risco Controlado</h4>
+                    </div>
+                    <p class="text-xs text-neutral-400">Zero cancelamentos identificados na seleção atual. O funil de faturamento de novos contratos demonstra excelente maturidade e confiabilidade.</p>
+                `;
+            }
+            container.appendChild(insight3);
+        }
+
+        function renderTable() {
+            const startIdx = (currentPage - 1) * pageSize;
+            const endIdx = startIdx + pageSize;
+            const dataSlice = filteredData.slice(startIdx, endIdx);
+
+            const tableBody = document.getElementById('salesTableBody');
+            tableBody.innerHTML = '';
+
+            if (dataSlice.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="py-12 text-center text-neutral-500 text-sm">
+                            <i class="fa-regular fa-folder-open text-2xl mb-2 block"></i>
+                            Nenhuma transação atende aos critérios dos filtros selecionados.
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('tablePaginationInfo').textContent = "0 resultados";
+                return;
+            }
+
+            dataSlice.forEach(row => {
+                let badgeClass = "bg-neutral-800 text-neutral-300";
+                const statusL = row.status.toLowerCase();
+                if (statusL.includes('delivered')) badgeClass = "bg-emerald-950/80 text-emerald-400 border border-emerald-900/60";
+                else if (statusL.includes('pending') || statusL.includes('awaiting')) badgeClass = "bg-amber-950/80 text-amber-400 border border-amber-900/60";
+                else if (statusL.includes('cancelled')) badgeClass = "bg-rose-950/80 text-rose-400 border border-rose-900/60";
+                else if (statusL.includes('transit') || statusL.includes('shipped')) badgeClass = "bg-blue-950/80 text-blue-400 border border-blue-900/60";
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-neutral-900/50 transition-colors cursor-pointer";
+                tr.onclick = (e) => {
+                    if (e.target.closest('button')) return;
+                    openSaleModal(row);
+                };
+
+                tr.innerHTML = `
+                    <td class="py-3 px-6 font-mono text-xs text-neutral-500">#${row.sale_id}</td>
+                    <td class="py-3 px-6 font-semibold text-white">${row.customer_name}</td>
+                    <td class="py-3 px-6 text-white">${row.model}</td>
+                    <td class="py-3 px-6 text-xs text-neutral-400">
+                        <div>Ano: <span class="text-white">${row.year}</span></div>
+                        <div>Km: <span class="text-white">${row.mileage.toLocaleString()}</span></div>
+                    </td>
+                    <td class="py-3 px-6 font-bold text-white">${formatUSD(row.price)}</td>
+                    <td class="py-3 px-6 font-mono text-xs text-neutral-400">${row.state}</td>
+                    <td class="py-3 px-6 text-xs text-neutral-300 capitalize">${row.salesperson.toLowerCase()}</td>
+                    <td class="py-3 px-6 text-xs text-neutral-400">${row.pay_method}</td>
+                    <td class="py-3 px-6">
+                        <span class="px-2.5 py-1 rounded-md text-[10px] font-semibold tracking-wider uppercase ${badgeClass}">${row.status}</span>
+                    </td>
+                    <td class="py-3 px-6 text-right">
+                        <button onclick='openSaleModal(${JSON.stringify(row)})' class="p-1.5 bg-neutral-900/80 hover:bg-porsche-red hover:text-white rounded border border-neutral-800 text-neutral-400 transition-all text-xs" title="Ver Detalhes">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            // Update Pagination display
+            const totalItems = filteredData.length;
+            const startRange = totalItems > 0 ? startIdx + 1 : 0;
+            const endRange = Math.min(endIdx, totalItems);
+            
+            document.getElementById('tablePaginationInfo').textContent = `Mostrando ${startRange} a ${endRange} de ${totalItems} transações`;
+            document.getElementById('currentPageNum').textContent = currentPage;
+        }
+
+        // Pagination controllers
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSize').value);
+            currentPage = 1;
+            renderTable();
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredData.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
+            }
+        }
+
+        // Modal & Interactive Detailed view functions
+        let activeSaleRow = null; // Track current row in modal details
+
+        function openSaleModal(row) {
+            activeSaleRow = row;
+            document.getElementById('modalAiDraftBox').classList.add('hidden');
+            document.getElementById('modalAiDraftContent').innerHTML = '';
+
+            document.getElementById('modalSaleId').textContent = `Nº de Venda: #00${row.sale_id}`;
+            document.getElementById('modalModel').textContent = row.model;
+            document.getElementById('modalYear').textContent = row.year;
+            document.getElementById('modalMileage').textContent = row.mileage.toLocaleString() + ' mi';
+            document.getElementById('modalCustomer').textContent = row.customer_name;
+            document.getElementById('modalSalesperson').textContent = row.salesperson;
+            document.getElementById('modalLocation').textContent = `${row.city}, ${row.state}`;
+            document.getElementById('modalPayment').textContent = row.pay_method;
+            document.getElementById('modalPrice').textContent = formatUSD(row.price);
+
+            // Styling modal status badge dynamically
+            const badge = document.getElementById('modalStatusBadge');
+            badge.textContent = row.status.toUpperCase();
+            
+            // Clean older classes
+            badge.className = "px-2.5 py-1 rounded text-xs font-semibold uppercase ";
+            const statusL = row.status.toLowerCase();
+            if (statusL.includes('delivered')) badge.className += "bg-emerald-950 text-emerald-400 border border-emerald-900/60";
+            else if (statusL.includes('pending') || statusL.includes('awaiting')) badge.className += "bg-amber-950 text-amber-400 border border-amber-900/60";
+            else if (statusL.includes('cancelled')) badge.className += "bg-rose-950 text-rose-400 border border-rose-900/60";
+            else badge.className += "bg-neutral-850 text-neutral-300";
+
+            document.getElementById('saleModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('saleModal').classList.add('hidden');
+            activeSaleRow = null;
+        }
+
+        // Print function simulation with Clipboard backup
+        function printInvoice() {
+            const saleId = document.getElementById('modalSaleId').textContent;
+            const modelName = document.getElementById('modalModel').textContent;
+            const clientName = document.getElementById('modalCustomer').textContent;
+            const price = document.getElementById('modalPrice').textContent;
+
+            const printContent = `
+=========================================
+      PORSCHE SUISSE - INVOICE RECEIPT
+=========================================
+${saleId}
+Veículo: ${modelName}
+Adquirente: ${clientName}
+Valor do Contrato: ${price}
+=========================================
+Obrigado por sua parceria e preferência!
+            `;
+            
+            const textElement = document.createElement('textarea');
+            textElement.value = printContent;
+            document.body.appendChild(textElement);
+            textElement.select();
+            document.execCommand('copy');
+            document.body.removeChild(textElement);
+            
+            const customAlert = document.createElement('div');
+            customAlert.className = "fixed bottom-10 left-10 z-50 bg-neutral-900/90 border border-porsche-red p-4 rounded-xl shadow-2xl text-xs text-white max-w-sm flex items-center space-x-3 backdrop-blur-md";
+            customAlert.innerHTML = `
+                <i class="fa-solid fa-circle-check text-emerald-500 text-lg"></i>
+                <div>
+                    <p class="font-bold uppercase tracking-wider">Recibo Copiado!</p>
+                    <p class="text-[10px] text-neutral-400">O recibo formatado de #00${activeSaleRow ? activeSaleRow.sale_id : '0'} foi copiado para a área de transferência.</p>
+                </div>
+            `;
+            document.body.appendChild(customAlert);
+            setTimeout(() => { customAlert.remove(); }, 4000);
+        }
+
+        // Gemini API caller configuration (supports automatic key injection)
+        async function callGemini(userQuery, systemPrompt = "") {
+            const apiKey = ""; // Leave as empty string so Canvas handles key injection dynamically
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }]
+            };
+            if (systemPrompt) {
+                payload.systemInstruction = { parts: [{ text: systemPrompt }] };
+            }
+
+            let delay = 1000;
+            const maxRetries = 3;
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) {
+                        if (response.status === 429 && i < maxRetries - 1) {
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            delay *= 2;
+                            continue;
+                        }
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) return text;
+                    throw new Error("Formato de resposta inesperado do Gemini.");
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        // AI Copilot Chat Toggle Control
+        function toggleAiChatbox() {
+            const chatbox = document.getElementById('aiChatbox');
+            if (chatbox.classList.contains('hidden')) {
+                chatbox.classList.remove('hidden');
+                setTimeout(() => {
+                    chatbox.classList.remove('scale-0', 'opacity-0');
+                    chatbox.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            } else {
+                chatbox.classList.remove('scale-100', 'opacity-100');
+                chatbox.classList.add('scale-0', 'opacity-0');
+                setTimeout(() => {
+                    chatbox.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        // Send chat messages in Copilot
+        async function sendAiChatMessage() {
+            const input = document.getElementById('aiChatInput');
+            const messageText = input.value.trim();
+            if (!messageText) return;
+
+            input.value = '';
+            appendAiMessage('Você', messageText, 'bg-neutral-900 border border-neutral-800 text-white ml-auto max-w-[85%]', 'text-neutral-400');
+            
+            const loaderId = appendAiLoader();
+            
+            try {
+                const context = getDatasetSummaryForAi();
+                const systemPrompt = `Você é um analista estratégico sênior e assessor executivo de vendas da Porsche Suisse. Suas respostas devem ser baseadas EXCLUSIVAMENTE nos dados da planilha passados no contexto abaixo. Seja direto, fale português impecável, formal e elegante. Não assuma nem fabrique informações que não estejam descritas nas variáveis a seguir.`;
+                const prompt = `Contexto consolidado da fatia ativa filtrada de "Planilha base Porsche para dashboard.xlsx":
+- Faturamento Total: ${context.totalRev}
+- Unidades de Veículos Vendidos: ${context.totalVol}
+- Ticket Médio por Contrato: ${context.avgPrice}
+- Proporção de Entregas Concluídas: ${context.deliveredRate}%
+- Principais Estados em Dólares: ${context.topStates}
+- Principais Modelos Transacionados: ${context.topModels}
+
+Pergunta do Usuário: ${messageText}`;
+
+                const responseText = await callGemini(prompt, systemPrompt);
+                removeAiLoader(loaderId);
+                appendAiMessage('Porsche Copilot', responseText, 'bg-neutral-950 border border-neutral-850 text-neutral-200 mr-auto max-w-[85%]', 'text-porsche-red font-bold uppercase tracking-wider');
+            } catch (error) {
+                removeAiLoader(loaderId);
+                appendAiMessage('Erro', 'Ocorreu um erro ao conectar-se com o assistente inteligente da Porsche Suisse. Por favor, tente novamente.', 'bg-rose-950/25 border border-rose-900 text-rose-300 mr-auto max-w-[85%]', 'text-rose-500 font-bold');
+            }
+        }
+
+        function handleAiChatKey(e) {
+            if (e.key === 'Enter') {
+                sendAiChatMessage();
+            }
+        }
+
+        function sendAiSuggested(text) {
+            document.getElementById('aiChatInput').value = text;
+            sendAiChatMessage();
+        }
+
+        function appendAiMessage(sender, text, classes, titleClass) {
+            const container = document.getElementById('aiChatMessages');
+            const msgNode = document.createElement('div');
+            msgNode.className = `p-3 rounded-xl space-y-1 ${classes}`;
+            msgNode.innerHTML = `
+                <p class="text-[9px] ${titleClass}">${sender}</p>
+                <p class="whitespace-pre-line leading-normal">${text}</p>
+            `;
+            container.appendChild(msgNode);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendAiLoader() {
+            const container = document.getElementById('aiChatMessages');
+            const loaderId = 'loader_' + Date.now();
+            const loaderNode = document.createElement('div');
+            loaderNode.id = loaderId;
+            loaderNode.className = "bg-neutral-950 border border-neutral-900 p-3 rounded-xl mr-auto max-w-[85%] flex items-center space-x-2 text-neutral-400";
+            loaderNode.innerHTML = `
+                <div class="h-2 w-2 bg-porsche-red rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                <div class="h-2 w-2 bg-porsche-red rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                <div class="h-2 w-2 bg-porsche-red rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                <span class="text-[10px] tracking-wide uppercase font-semibold pl-1">Processando...</span>
+            `;
+            container.appendChild(loaderNode);
+            container.scrollTop = container.scrollHeight;
+            return loaderId;
+        }
+
+        function removeAiLoader(id) {
+            const loader = document.getElementById(id);
+            if (loader) loader.remove();
+        }
+
+        // Helper to compile metadata on active filter status
+        function getDatasetSummaryForAi() {
+            const totalRev = filteredData.reduce((acc, curr) => acc + curr.price, 0);
+            const totalVol = filteredData.length;
+            const avgPrice = totalVol > 0 ? (totalRev / totalVol) : 0;
+            const deliveredVolume = filteredData.filter(d => d.status.toLowerCase() === 'delivered').length;
+            const deliveredRate = totalVol > 0 ? ((deliveredVolume / totalVol) * 100).toFixed(1) : 0;
+
+            const states = {};
+            filteredData.forEach(d => states[d.state] = (states[d.state] || 0) + d.price);
+            const topStates = Object.entries(states).sort((a,b) => b[1]-a[1]).slice(0, 3).map(s => `${s[0]} (${formatUSD(s[1])})`).join(', ') || "N/A";
+
+            const models = {};
+            filteredData.forEach(d => models[d.model] = (models[d.model] || 0) + 1);
+            const topModels = Object.entries(models).sort((a,b) => b[1]-a[1]).slice(0, 3).map(m => `${m[0]} (${m[1]} un)`).join(', ') || "N/A";
+
+            return {
+                totalRev: formatUSD(totalRev),
+                totalVol,
+                avgPrice: formatUSD(avgPrice),
+                deliveredRate,
+                topStates,
+                topModels
+            };
+        }
+
+        // AI Executive Report Generator (Porsche Intelligence Hub)
+        async function generateAiExecutiveReport() {
+            const reportBox = document.getElementById('aiReportBox');
+            const reportContent = document.getElementById('aiReportContent');
+
+            reportBox.classList.remove('hidden');
+            reportContent.innerHTML = `
+                <div class="flex items-center space-x-2 text-neutral-400 py-4">
+                    <i class="fa-solid fa-spinner animate-spin text-porsche-red"></i>
+                    <span>Sincronizando dados e gerando insights estratégicos estruturados com o Gemini...</span>
+                </div>
+            `;
+
+            try {
+                const context = getDatasetSummaryForAi();
+                const systemPrompt = "Você é o Diretor de Operações e Finanças (CFO) da Porsche Suisse. Seu linguajar é extremamente corporativo, polido, focado e de alta classe (pt-BR).";
+                const prompt = `Com base exclusivamente nestes dados consolidados do arquivo "Planilha base Porsche para dashboard.xlsx" no filtro selecionado:
+- Faturamento Consolidado: ${context.totalRev}
+- Unidades Transacionadas: ${context.totalVol}
+- Ticket Médio por Contrato: ${context.avgPrice}
+- Taxa de Entregas Concluídas (Delivered): ${context.deliveredRate}%
+- Estados Principais por Volume Financeiro: ${context.topStates}
+- Modelos Mais Vendidos no Escopo: ${context.topModels}
+
+Escreva uma Síntese Executiva de Desempenho. Enumere:
+1. Uma oportunidade de otimização de faturamento com base no ticket médio ou nos estados mais ativos.
+2. Um risco identificado na distribuição operacional (ex: status pendentes de entrega ou cancelamentos).
+3. Uma ação imediata voltada para maximizar as receitas com base no portfólio.
+Use títulos em negrito, estilo minimalista e foco absoluto no que está presente estritamente na base estatística fornecida.`;
+
+                const responseText = await callGemini(prompt, systemPrompt);
+                reportContent.innerHTML = responseText;
+            } catch (error) {
+                reportContent.innerHTML = `
+                    <div class="p-3 bg-rose-950/20 border border-rose-900 rounded-lg text-rose-300 text-xs">
+                        <i class="fa-solid fa-circle-exclamation mr-1 text-rose-500"></i>
+                        Erro ao conectar-se com o motor analítico da IA. Certifique-se de que a conexão esteja estável.
+                    </div>
+                `;
+            }
+        }
+
+        function toggleAiReport() {
+            document.getElementById('aiReportBox').classList.add('hidden');
+        }
+
+        // Generate personalized upgrade / fidelity offer based on modal row data
+        async function generateAiProposalForSale() {
+            const draftBox = document.getElementById('modalAiDraftBox');
+            const draftContent = document.getElementById('modalAiDraftContent');
+
+            draftBox.classList.remove('hidden');
+            draftContent.innerHTML = `
+                <div class="flex items-center space-x-2 text-neutral-500 py-3">
+                    <i class="fa-solid fa-circle-notch animate-spin text-porsche-red"></i>
+                    <span>Modelando proposta comercial exclusiva de alta conversão...</span>
+                </div>
+            `;
+
+            try {
+                const name = document.getElementById('modalCustomer').textContent;
+                const model = document.getElementById('modalModel').textContent;
+                const year = document.getElementById('modalYear').textContent;
+                const mileage = document.getElementById('modalMileage').textContent;
+                const salesperson = document.getElementById('modalSalesperson').textContent;
+
+                const systemPrompt = "Você é um especialista em relacionamento de altíssimo padrão na Porsche Suisse. Seu tom é impecável, respeitoso e sofisticado.";
+                const prompt = `Escreva uma mensagem ou e-mail de fidelização elegante para o cliente.
+Nome do Cliente: ${name}
+Veículo Adquirido: Porsche ${model} (${year}, Km registrado: ${mileage})
+Vendedor Responsável: ${salesperson}
+
+Objetivo:
+- Propor uma abordagem focada em manutenção de portfólio de luxo ou convite exclusivo com base no ano do carro comprado. 
+- Se for modelo com alta quilometragem ou mais antigo, sugerir de forma sutil uma avaliação privada do veículo atual dele para troca programada.
+- Se for esportivo recente, oferecer um convite para Track-day ou experiência personalizada.
+Seja conciso (máximo 150 palavras) e use termos elegantes em português.`;
+
+                const responseText = await callGemini(prompt, systemPrompt);
+                draftContent.innerHTML = responseText;
+            } catch (error) {
+                draftContent.innerHTML = `
+                    <div class="text-rose-400 text-xs py-2">
+                        <i class="fa-solid fa-triangle-exclamation mr-1 text-rose-500"></i>
+                        Não foi possível gerar a proposta automática no momento.
+                    </div>
+                `;
+            }
+        }
+
+        function toggleModalAiDraft(show) {
+            const draftBox = document.getElementById('modalAiDraftBox');
+            if (show) {
+                draftBox.classList.remove('hidden');
+            } else {
+                draftBox.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
