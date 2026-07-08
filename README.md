@@ -1,3 +1,4 @@
+https://rawcdn.githack.com/AndersonTRabelo/Porsche-Dashboard/refs/heads/main/porsche_sales_intelligence_dashboard.html
 # **🏎️ Porsche Suisse | Sales Intelligence Dashboard**
 
 Este repositório contém o **Sales Intelligence Dashboard** da Porsche Suisse, uma aplicação web executiva, interativa e de alto padrão estético desenvolvida com base estrita nos dados consolidados do arquivo Planilha base Porsche para dashboard.xlsx.
